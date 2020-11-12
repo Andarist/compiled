@@ -1,4 +1,5 @@
-import React from 'react';
+import * as React from 'react';
+import { memo } from 'react';
 import createStyleSheet, { groupSheetsByBucket, styleBucketOrdering } from './sheet';
 import { analyzeCssInDev } from './dev-warnings';
 import { StyleSheetOpts } from './types';
@@ -16,37 +17,58 @@ interface StyleProps extends StyleSheetOpts {
 // Variable declaration list because it's smaller.
 let stylesheet: ReturnType<typeof createStyleSheet>;
 
-export default function Style(props: StyleProps) {
-  const inserted = useCache();
+let ONE = false;
+let TWO = false;
 
-  if (process.env.NODE_ENV === 'development') {
-    props.children.forEach(analyzeCssInDev);
-  }
+export default memo(
+  function Style(props: StyleProps) {
+    const inserted = useCache();
 
-  const sheets = props.children.filter((sheet) => {
-    if (inserted[sheet]) {
-      return false;
+    const length = props.children.length;
+    if (length === 15 && ONE) {
+      return null;
+    } else if (length === 13 && TWO) {
+      return null;
     }
 
-    return (inserted[sheet] = true);
-  });
-
-  if (sheets.length) {
-    if (isNodeEnvironment()) {
-      // The following code will not exist in the browser bundle.
-      const sheetsGroupedByBucket = groupSheetsByBucket(sheets);
-
-      return (
-        <style nonce={props.nonce}>
-          {styleBucketOrdering.map((bucket) => sheetsGroupedByBucket[bucket])}
-        </style>
-      );
-    } else {
-      // Keep re-assigning over ternary because it's smaller
-      stylesheet = stylesheet || createStyleSheet(props);
-      sheets.forEach(stylesheet);
+    if (length === 15) {
+      ONE = true;
     }
-  }
 
-  return null;
-}
+    if (length === 13) {
+      TWO = true;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      props.children.forEach(analyzeCssInDev);
+    }
+
+    const sheets = props.children.filter((sheet) => {
+      if (inserted[sheet]) {
+        return false;
+      }
+
+      return (inserted[sheet] = true);
+    });
+
+    if (sheets.length) {
+      if (isNodeEnvironment()) {
+        // The following code will not exist in the browser bundle.
+        const sheetsGroupedByBucket = groupSheetsByBucket(sheets);
+
+        return (
+          <style nonce={props.nonce}>
+            {styleBucketOrdering.map((bucket) => sheetsGroupedByBucket[bucket])}
+          </style>
+        );
+      } else {
+        // Keep re-assigning over ternary because it's smaller
+        stylesheet = stylesheet || createStyleSheet(props);
+        sheets.forEach(stylesheet);
+      }
+    }
+
+    return null;
+  },
+  () => true
+);
