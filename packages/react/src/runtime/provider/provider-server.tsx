@@ -28,8 +28,8 @@ export const useCache: UseCacheHook = () => {
 };
 
 const CompiledComponent: ProviderComponent = (props: { children: JSX.Element[] | JSX.Element }) => {
-  const inserted = useRef<Record<string, true>>(useCache());
-  return <Cache.Provider value={inserted.current}>{props.children}</Cache.Provider>;
+  const inserted = useCache();
+  return <Cache.Provider value={inserted}>{props.children}</Cache.Provider>;
 };
 
 export default CompiledComponent;
